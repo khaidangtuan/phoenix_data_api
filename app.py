@@ -30,7 +30,7 @@ def getPrice(model: str, curr: str, color: str = '') -> Price:
     # create query
     query = f'''
     SELECT "price", "groupName", "senderName","senderPhone","updated_at"
-    FROM public."latest_price"
+    FROM public."{table_name}"
     WHERE model = '{model}' 
     AND color = '{color}';
     '''
@@ -58,7 +58,7 @@ def sortPrice(sort: str, curr: str):
     # create query
     query = f'''
     SELECT "model", "price"
-    FROM public."latest_price"
+    FROM public."{table_name}"
     ORDER BY "price" {sort.upper()}
     LIMIT 250;
     '''
