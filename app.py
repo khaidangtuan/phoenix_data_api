@@ -51,12 +51,18 @@ def getPrice(model: str, curr: str, color: str = '') -> Price:
                  )
 
 @app.get('/sortPrice/')
-def sortPrice(sort: str, curr: str):
+def sortPrice(sort: str, curr: str, order: str, type: int):
+    
+    if order == "price":
+        sorted_col = order
+    elif order == "created_at_time":
+        sorted_col = "updated_at"
+    
     # create query
     query = f'''
     SELECT "model", "price", "senderName","senderPhone","updated_at"
     FROM public."{table_name}"
-    ORDER BY "price" {sort.upper()}
+    ORDER BY "{sorted_col}" {sort.upper()}
     LIMIT 250;
     '''
     
