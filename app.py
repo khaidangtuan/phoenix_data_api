@@ -14,6 +14,14 @@ class Price(BaseModel):
     whatsapp: str
     whatsappName: str
     updated_at: str
+    
+class Value(BaseModel):
+    code: str
+    price: float
+    currency: str
+    whatsapp: str
+    whatsappName: str
+    updated_at: str
 
 # initiate engine
 engine = sa.create_engine(conn_str)    
@@ -71,12 +79,13 @@ def sortPrice(sort: str, curr: str, order: str, type: int):
     
     results['price'] = results['price'].apply(lambda x: curr_convert(x, curr_df, curr.lower()))
     results['currency'] = curr.upper()
-    results.rename(columns={'senderPhone':'whatsapp',
+    results.rename(columns={'model':'code',
+                            'senderPhone':'whatsapp',
                             'senderName':'whatsappName'}, inplace=True)
     
     results['updated_at'] = results['updated_at'].astype(str)
     
-    ta = TypeAdapter(List[Price])
+    ta = TypeAdapter(List[Value])
     values = ta.validate_python(results.to_dict('records'))
     
     return values
