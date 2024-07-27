@@ -1,12 +1,10 @@
-from typing import Union, List
+from typing import List
 from fastapi import FastAPI
 from pydantic import BaseModel, TypeAdapter
-from datetime import datetime
 import sqlalchemy as sa
 from sqlalchemy import text
 import psycopg2
 import pandas as pd
-from pandas.tseries.offsets import DateOffset
 from utils import curr_convert
 from postgres_config import conn_str, table_name
 
@@ -29,7 +27,7 @@ app = FastAPI()
 def getPrice(model: str, curr: str, color: str = '') -> Price:
     # create query
     query = f'''
-    SELECT "price", "groupName", "senderName","senderPhone","updated_at"
+    SELECT "price", "senderName","senderPhone","updated_at"
     FROM public."{table_name}"
     WHERE model = '{model}' 
     AND color = '{color}';
@@ -44,7 +42,6 @@ def getPrice(model: str, curr: str, color: str = '') -> Price:
     results['price'] = results['price'].apply(lambda x: curr_convert(x, curr_df, curr.lower()))
     
     response = results.to_dict('records')[0]
-    print(response)
     
     return Price(price=response['price'],
                  currency=curr.upper(),
@@ -57,7 +54,7 @@ def getPrice(model: str, curr: str, color: str = '') -> Price:
 def sortPrice(sort: str, curr: str):
     # create query
     query = f'''
-    SELECT "model", "price"
+    SELECT "model", "price", "senderName","senderPhone","updated_at"
     FROM public."{table_name}"
     ORDER BY "price" {sort.upper()}
     LIMIT 250;
@@ -68,5 +65,12 @@ def sortPrice(sort: str, curr: str):
     
     results['price'] = results['price'].apply(lambda x: curr_convert(x, curr_df, curr.lower()))
     results['currency'] = curr.upper()
+    results.rename(columns={'senderPhone':'whatsapp',
+                            'senderName':'whatsappName'}, inplace=True)
     
-    return results.to_dict('records')
+    results['updated_at'] = results['updated_at'].astype(str)
+    
+    ta = TypeAdapter(List[Price])
+    values = ta.validate_python(results.to_dict('records'))
+    
+    return values
