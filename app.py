@@ -89,3 +89,44 @@ def sortPrice(sort: str, curr: str, order: str, type: int):
     values = ta.validate_python(results.to_dict('records'))
     
     return values
+
+@app.get('/countbyBrand/')
+def countbyBrand():
+    
+    # create query
+    query = f'''
+    SELECT *
+    FROM public."total_countMessages"
+    '''
+    with engine.connect() as conn:
+        total_count = pd.read_sql(text(query), conn)
+        
+    # create query
+    query = f'''
+    SELECT *
+    FROM public."forSale_countbyBrand"
+    '''
+    with engine.connect() as conn:
+        forSale_count = pd.read_sql(text(query), conn)
+        
+    # create query
+    query = f'''
+    SELECT *
+    FROM public."wantToBuy_countbyBrand"
+    '''
+    with engine.connect() as conn:
+        wantToBuy_count = pd.read_sql(text(query), conn)
+    
+    wantToBuy_count.rename(columns={'count':'wantToBuy'}, inplace=True)
+    forSale_count.rename(columns={'count':'forSale'}, inplace=True)    
+    count_byBrand = wantToBuy_count.merge(forSale_count, how='left', on='brand')
+    count_byBrand.reset_index(inplace=True)
+    count_byBrand.rename(columns={'index':'id',
+                                  'brand':'name'}, inplace=True)
+    
+    results = total_count.to_dict('records')[0]
+    results['brands'] = count_byBrand.to_dict('records')
+    
+    return results
+
+    
