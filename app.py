@@ -92,7 +92,6 @@ def sortPrice(sort: str, curr: str, order: str, type: int):
 
 @app.get('/countbyBrand/')
 def countbyBrand():
-    
     # create query
     query = f'''
     SELECT *
@@ -100,6 +99,7 @@ def countbyBrand():
     '''
     with engine.connect() as conn:
         total_count = pd.read_sql(text(query), conn)
+        
         
     # create query
     query = f'''
@@ -129,4 +129,31 @@ def countbyBrand():
     
     return results
 
+@app.get('/searchModel/')
+def searchModel(keyword: str, currency:str):
+    
+    # create query
+    fulltext_query = '''
+    SELECT *
+            FROM "latest_price"
+            WHERE "model" ~ '{}'
+            ORDER BY "updated_at" DESC
+            LIMIT 250;
+    '''
+
+    with engine.connect() as conn:
+        results = pd.read_sql(fulltext_query.format(keyword), conn)
+    
+    results['price'] = results['price'].apply(lambda x: curr_convert(x, curr_df, currency.lower()))
+    results['currency'] = currency
+    results['type'] = 1
+    results = results[['model','price','currency','senderPhone','senderName','updated_at','type']]
+    results.rename(columns={'model':'code',
+                            'senderPhone':'whatsapp',
+                            'senderName':'whatsappName'}, inplace=True)
+    
+    return results.to_dict('records')
+    
+        
+    
     
